@@ -158,7 +158,7 @@ real Nestopia/Mesen hardware-accuracy run.
 
 ## 9. Keep the browser player as a real test surface
 
-`ports/nes/web/jsnes-player.html` is served over HTTP because browsers do not reliably load a
+`ports/nes/web/emulatorjs-player.html` is served over HTTP because browsers do not reliably load a
 ROM with `file://` fetches. It embeds the official EmulatorJS loader, points it
 at the local ROM with a cache-busting query, and selects the Nestopia NES core.
 EmulatorJS owns the rendering, keyboard mapping, pause/reset menu, save states,
@@ -179,7 +179,7 @@ python3 -m http.server 8000
 Then open:
 
 ```text
-http://localhost:8000/ports/nes/web/jsnes-player.html
+http://localhost:8000/ports/nes/web/emulatorjs-player.html
 
 http://localhost:8000/ports/nes/web/test_nestopia.html
 ```

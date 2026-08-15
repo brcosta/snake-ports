@@ -83,7 +83,7 @@
     // the more accuracy-oriented NES core; the ROM remains local to this app.
     EJS_player = '#game';
     EJS_core = 'nestopia';
-    EJS_gameUrl = `../roms/snake.nes?build=${Date.now()}`;
+    EJS_gameUrl = `${new URL('../roms/snake.nes', document.baseURI).href}?build=${Date.now()}`;
     EJS_gameName = 'Snake NES';
     EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
     EJS_controlScheme = 'nes';

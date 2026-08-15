@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10131a">
+  <title>SNAKE! Ports</title>
+  <style>
+    :root { color-scheme: dark; --ink:#f4f0e8; --muted:#a7adb8; --orange:#ff754f; --green:#72e600; --panel:#171b24; --line:#303846; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:radial-gradient(circle at 50% -10%,#303644 0,#10131a 52%,#08090d 100%); font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif; }
+    main { width:min(1080px,100%); margin:auto; padding:48px 22px 64px; }
+    header { text-align:center; margin-bottom:36px; }
+    .eyebrow { color:var(--green); font:700 12px/1 ui-monospace,SFMono-Regular,monospace; letter-spacing:.22em; text-transform:uppercase; }
+    h1 { margin:12px 0 8px; color:var(--orange); font:700 clamp(42px,9vw,82px)/.95 ui-monospace,SFMono-Regular,monospace; letter-spacing:.14em; text-shadow:4px 4px #782e28; }
+    header p { max-width:620px; margin:0 auto; color:var(--muted); }
+    .ports { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+    .card { display:flex; flex-direction:column; min-height:310px; padding:22px; border:1px solid var(--line); border-radius:18px; background:linear-gradient(150deg,#202632,#11151c); box-shadow:0 18px 40px #0008; }
+    .card h2 { margin:0 0 8px; font:700 22px ui-monospace,SFMono-Regular,monospace; }
+    .card p { margin:0 0 18px; color:var(--muted); }
+    .preview { overflow:hidden; min-height:150px; display:grid; place-items:center; margin:0 0 20px; border-radius:10px; background:#000; }
+    .preview img { display:block; width:100%; height:150px; object-fit:contain; image-rendering:pixelated; }
+    .buttons { display:flex; flex-wrap:wrap; gap:10px; margin-top:auto; }
+    a.button { display:inline-block; padding:10px 14px; border-radius:8px; color:#111; background:var(--orange); font-weight:800; text-decoration:none; }
+    a.button:hover { filter:brightness(1.12); }
+    a.secondary { color:var(--ink); background:#303846; }
+    footer { margin-top:28px; color:var(--muted); text-align:center; font-size:13px; }
+    footer a { color:var(--orange); }
+    @media (max-width:700px) { main { padding:30px 14px 42px; } .ports { grid-template-columns:1fr; } .card { min-height:0; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">DOS · WEB · NES</div>
+      <h1>SNAKE!</h1>
+      <p>An old 2003 assembly game with a browser recreation and a playable NES port.</p>
+    </header>
+
+    <section class="ports" aria-label="Playable ports">
+      <article class="card">
+        <div class="preview"><img src="docs/screenshots/original-web-title.jpg" alt="Original web port title screen"></div>
+        <h2>Original web port</h2>
+        <p>The self-contained HTML/Canvas version. No build step or emulator is required.</p>
+        <div class="buttons"><a class="button" href="ports/web/index.html">Play web game</a><a class="button secondary" href="ports/web/README.md">About this port</a></div>
+      </article>
+
+      <article class="card">
+        <div class="preview"><img src="docs/screenshots/original-web-gameplay.jpg" alt="Snake gameplay in the original web port"></div>
+        <h2>NES / EmulatorJS</h2>
+        <p>Play the cc65 NES ROM in the browser with EmulatorJS using its Nestopia core.</p>
+        <div class="buttons"><a class="button" href="ports/nes/web/emulatorjs-player.html">Play NES game</a><a class="button secondary" href="ports/nes/README.md">Build details</a></div>
+      </article>
+    </section>
+
+    <footer>Source, history, and porting notes are available in the <a href="README.md">repository README</a>.</footer>
+  </main>
+</body>
+</html>

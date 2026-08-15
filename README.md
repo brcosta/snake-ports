@@ -8,7 +8,7 @@ and reworked into a browser version and a playable NES port. The repository is
 intentionally a time capsule: the original source and executable stay beside
 the newer ports so the evolution can be compared rather than hidden.
 
-![NES title screen](docs/screenshots/title-screen.svg)
+![Original web title screen](docs/screenshots/original-web-title.jpg)
 
 ## Port catalog
 
@@ -41,6 +41,13 @@ docs/
 └── screenshots/          README visuals
 ```
 
+## Play online
+
+Once GitHub Pages has completed its first deployment, the project hub will be
+available at [brcosta.github.io/snake-ports](https://brcosta.github.io/snake-ports/).
+It provides launch buttons for both the original web game and the NES ROM in
+the EmulatorJS/Nestopia player.
+
 ## Quick start
 
 ### Play the browser port
@@ -63,7 +70,7 @@ Install [cc65](https://cc65.github.io/), then run:
 
 Open `ports/nes/roms/snake.nes` in Mesen, Nestopia, FCEUX, or another NES
 emulator. For the portable browser player, use a local server and open
-[`ports/nes/web/jsnes-player.html`](ports/nes/web/jsnes-player.html). It uses
+[`ports/nes/web/emulatorjs-player.html`](ports/nes/web/emulatorjs-player.html). It uses
 EmulatorJS with the Nestopia core and includes touch-friendly controls.
 
 ### Run the DOS original
@@ -91,11 +98,9 @@ the player snake and begins a fresh game.
 | Start / Enter | Start, pause, or resume |
 | A / B | Not used for gameplay |
 
-![NES gameplay](docs/screenshots/gameplay.svg)
+The original browser port can also be seen in this captured gameplay frame:
 
-The original browser port can also be seen in this captured frame:
-
-![Original web port](docs/screenshots/web-port.jpg)
+![Original web gameplay](docs/screenshots/original-web-gameplay.jpg)
 
 ## Curiosities and trivia
 

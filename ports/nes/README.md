@@ -18,7 +18,7 @@ The output is written to `ports/nes/roms/snake.nes`.
 
 - Open `roms/snake.nes` in Mesen, Nestopia, FCEUX, or another NES emulator.
 - Serve the repository with a local HTTP server and open
-  `web/jsnes-player.html` for the portable EmulatorJS/Nestopia player.
+  `web/emulatorjs-player.html` for the portable EmulatorJS/Nestopia player.
 - `web/test_nestopia.html` is a small rendered-frame and input smoke test.
 
 Gameplay starts only after pressing Start. Arrow keys steer the snake; Start
