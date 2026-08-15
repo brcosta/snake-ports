@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Snake NES / EmulatorJS</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center;
+      padding: 18px; box-sizing: border-box;
+      background: radial-gradient(circle at 50% 10%, #30313a 0, #171820 42%, #0c0d11 100%);
+      color: #eee; font: 14px system-ui, sans-serif;
+    }
+    main.handheld {
+      width: min(720px, 100%); display: grid; gap: 16px; justify-items: stretch;
+      padding: 22px 24px 18px; box-sizing: border-box;
+      background: linear-gradient(145deg, #4d5663, #303742 58%, #252b34);
+      border: 2px solid #697482; border-radius: 28px 28px 42px 42px;
+      box-shadow: 0 22px 50px #000a, inset 0 1px #aab3bd55, inset 0 -5px #171b22;
+    }
+    .brand {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 6px; color: #f3b36b; font: 700 12px/1.2 ui-monospace, monospace;
+      letter-spacing: .18em; text-transform: uppercase;
+    }
+    .brand-name { color: #f0f2f5; }
+    .power { display: flex; align-items: center; gap: 6px; color: #9da7b3; letter-spacing: .08em; }
+    .power-led { width: 7px; height: 7px; border-radius: 50%; background: #77ed42; box-shadow: 0 0 9px #77ed42; }
+    .screen-bezel {
+      padding: 13px; background: #16191e; border: 2px solid #727b86;
+      border-radius: 14px 14px 20px 20px; box-shadow: inset 0 3px 8px #000, 0 2px #171b20;
+    }
+    .screen-glass {
+      overflow: hidden; border: 4px solid #08090b; border-radius: 7px;
+      background: #000; box-shadow: 0 0 0 2px #454d57;
+      aspect-ratio: 256 / 240;
+    }
+    #game { width: 100%; height: 100%; background: #000; }
+    #game canvas { display: block; width: 100% !important; height: 100% !important; image-rendering: pixelated; }
+    .console-deck { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 0 18px; }
+    .controls-note { color: #d6dbe2; font: 700 11px/1.4 ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .speaker {
+      display: grid; grid-template-columns: repeat(6, 5px); gap: 5px;
+      transform: rotate(-18deg); opacity: .7; padding: 12px 8px;
+    }
+    .speaker i { width: 5px; height: 5px; border-radius: 50%; background: #171c24; box-shadow: inset 0 1px #080a0d; }
+    .footer { display: flex; align-items: center; justify-content: space-between; padding: 0 8px; color: #aab3be; font: 700 10px ui-monospace, monospace; letter-spacing: .18em; }
+    .footer strong { color: #f3b36b; }
+    p.help { margin: 0; opacity: .75; text-align: center; font-size: 12px; }
+    code { color: #a8ef7d; }
+    @media (max-width: 600px) {
+      body { padding: 8px; }
+      main.handheld { padding: 16px 12px 14px; gap: 12px; border-radius: 22px 22px 32px 32px; }
+      .screen-bezel { padding: 8px; }
+      .console-deck { padding: 0 4px; gap: 8px; }
+      .controls-note { font-size: 10px; }
+      .speaker { grid-template-columns: repeat(5, 5px); gap: 4px; }
+      .footer { font-size: 9px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="handheld">
+    <header class="brand">
+      <span class="brand-name">SNAKE! POCKET</span>
+      <span class="power"><i class="power-led"></i> POWER</span>
+    </header>
+    <section class="screen-bezel" aria-label="Game screen">
+      <div class="screen-glass"><div id="game" aria-label="EmulatorJS NES game"></div></div>
+    </section>
+    <section class="console-deck" aria-label="Game controls">
+      <div class="controls-note">Emulator controls<br>inside screen</div>
+      <div class="speaker" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </section>
+    <footer class="footer"><span><strong>NES</strong> EDITION</span><span>EMULATORJS / NESTOPIA</span></footer>
+    <p class="help">Use the EmulatorJS controls or a keyboard · Start/Pause: <code>Enter</code></p>
+  </main>
+  <script>
+    // EmulatorJS is the embedded player. Nestopia is selected explicitly as
+    // the more accuracy-oriented NES core; the ROM remains local to this app.
+    EJS_player = '#game';
+    EJS_core = 'nestopia';
+    EJS_gameUrl = `snake.nes?build=${Date.now()}`;
+    EJS_gameName = 'Snake NES';
+    EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+    EJS_controlScheme = 'nes';
+    EJS_startOnLoaded = true;
+    EJS_volume = 0.35;
+  </script>
+  <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
+</body>
+</html>

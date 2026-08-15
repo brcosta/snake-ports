@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNAKE!</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+  font-family: monospace;
+}
+#gameWrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  width: 960px;
+  height: 600px;
+  max-width: 100vw;
+  max-height: 100vh;
+  object-fit: contain;
+}
+@media (max-width: 1000px) {
+  canvas { width: 100vw; height: auto; aspect-ratio: 320/200; }
+}
+</style>
+</head>
+<body>
+<div id="gameWrap"><canvas id="game" width="320" height="200"></canvas></div>
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+const paletteRaw = [0,0,0, 0,0,40, 40,0,0, 5,4,3, 23,23,23, 40,40,40, 15,10,10, 0,0,0, 20,0,0, 0,0,0, 30,1,2, 0,0,0, 63,63,63, 0,0,0, 0,0,0, 63,30,0, 63,63,63, 63,63,63, 0,0,0, 63,63,63, 10,20,0, 10,50,0, 20,30,0, 63,63,20, 20,30,0, 20,63,0, 30,40,0, 63,63,63];
+const palette = [];
+for (let i = 0; i < 84; i += 3) {
+  palette.push([
+    Math.round(paletteRaw[i] * 255 / 63),
+    Math.round(paletteRaw[i+1] * 255 / 63),
+    Math.round(paletteRaw[i+2] * 255 / 63)
+  ]);
+}
+
+const smallFont = new Uint8Array([0,0,0,0,0,32,32,32,0,32,80,80,0,0,0,80,248,80,248,80,32,112,96,48,112,200,208,32,88,152,96,104,112,144,104,32,32,0,0,0,16,32,32,32,16,64,32,32,32,64,168,112,32,112,168,32,32,248,32,32,0,0,0,32,64,0,0,248,0,0,0,0,0,0,32,8,16,32,64,128,112,136,136,136,112,16,48,16,16,56,112,8,112,128,248,240,8,112,8,240,16,144,240,16,16,240,128,240,8,240,112,128,240,136,112,120,8,16,32,32,112,136,112,136,112,112,136,120,8,112,0,32,0,32,0,0,32,0,32,64,16,32,64,32,16,0,248,0,248,0,64,32,16,32,64,112,8,48,0,32,112,184,184,128,112,112,136,248,136,136,240,136,240,136,240,112,128,128,128,112,240,136,136,136,240,248,128,240,128,248,248,128,240,128,128,120,128,184,136,120,136,136,248,136,136,248,32,32,32,248,120,16,16,144,96,136,144,224,144,136,128,128,128,128,248,136,216,168,136,136,136,200,168,152,136,112,136,136,136,112,240,136,240,128,128,112,136,168,152,120,240,136,240,144,136,112,128,112,8,112,248,32,32,32,32,136,136,136,136,112,136,136,80,80,32,136,136,168,216,136,136,80,32,80,136,136,136,120,8,112,248,16,32,64,248,112,64,64,64,112,128,64,32,16,8,112,16,16,16,112,32,80,0,0,0,0,0,0,0,252,0,0,0,0,0]);
+
+const snakeBody = new Uint8Array([0,20,20,20,20,20,20,0,20,22,22,21,21,22,22,20,20,22,21,21,21,21,22,20,20,21,21,23,23,21,21,20,20,21,21,23,23,21,21,20,20,22,21,21,21,21,22,20,20,22,22,21,21,22,22,20,0,20,20,20,20,20,20,0]);
+const dotSprite = new Uint8Array([0,0,0,24,24,0,0,0,0,0,24,26,26,24,0,0,0,24,26,25,25,26,24,0,24,26,25,27,27,25,26,24,24,26,25,27,27,25,26,24,0,24,26,25,25,26,24,0,0,0,24,26,26,24,0,0,0,0,0,24,24,0,0,0]);
+
+const logoData = new Uint8Array([255,0,123,0,1,240,1,255,1,127,9,0,1,128,1,31,7,0,1,126,9,0,1,32,1,0,1,128,10,0,1,33,7,0,1,132,9,0,1,64,2,0,1,1,9,0,1,66,7,0,1,8,1,1,8,0,1,128,2,0,1,2,9,0,1,132,7,0,1,16,1,2,9,0,1,1,1,0,1,4,9,0,1,8,1,1,6,0,1,32,1,4,8,0,1,240,2,255,1,15,9,0,1,16,1,2,6,0,1,64,1,8,8,0,1,32,1,4,11,0,1,32,1,4,6,0,1,128,1,16,8,0,1,64,1,8,11,0,1,64,1,8,7,0,1,33,8,0,1,128,1,16,11,0,1,128,1,16,7,0,1,66,9,0,1,33,12,0,1,33,7,0,1,132,9,0,1,66,12,0,1,66,7,0,1,8,1,1,8,0,1,132,12,0,1,132,7,0,1,16,1,2,8,0,1,8,1,1,11,0,1,8,1,1,6,0,1,32,1,4,8,0,1,16,1,2,11,0,1,16,1,2,1,128,1,31,4,0,1,64,1,8,8,0,1,224,2,255,1,31,1,0,1,252,1,255,1,127,2,0,1,254,1,255,1,0,1,32,1,4,1,0,1,33,1,0,1,248,1,255,1,3,1,128,1,16,9,0,1,8,1,0,1,32,1,0,1,8,1,0,1,128,2,0,1,4,1,0,1,1,1,64,1,8,1,0,1,66,1,0,1,16,1,0,1,4,1,0,1,33,9,0,1,16,1,0,1,64,1,0,1,16,2,0,1,1,1,0,1,8,1,0,1,2,1,128,1,16,1,0,1,132,1,0,1,32,1,0,1,8,1,0,1,66,9,0,1,32,1,0,1,128,1,0,1,32,2,0,1,2,1,0,1,16,1,0,1,4,1,0,1,33,1,0,1,8,1,1,1,64,1,0,1,16,1,0,1,132,9,0,1,64,2,0,1,1,1,64,2,0,1,4,1,0,1,32,1,0,1,8,1,0,1,66,1,128,1,255,1,3,1,128,1,0,1,32,1,0,1,8,1,1,8,0,1,128,2,255,1,127,1,128,1,240,2,255,1,1,1,192,2,255,1,3,1,132,1,0,1,33,1,0,1,248,2,255,1,15,1,16,1,2,11,0,1,132,1,0,1,33,1,0,1,16,1,2,2,0,1,32,1,4,1,8,1,1,1,66,1,0,1,16,1,2,1,128,1,16,1,32,1,4,11,0,1,8,1,1,1,66,1,0,1,32,1,4,2,0,1,64,1,8,1,16,1,2,1,132,1,0,1,32,1,4,1,0,1,33,1,64,1,8,11,0,1,16,1,2,1,132,1,0,1,64,1,8,2,0,1,128,1,16,1,32,1,4,1,8,1,1,1,64,1,8,1,0,1,66,1,128,1,16,11,0,1,32,1,4,1,8,1,1,1,128,1,16,1,0,1,252,1,255,1,33,1,64,1,248,1,255,1,3,1,128,1,240,1,255,1,135,1,0,1,33,11,0,1,64,1,8,1,16,1,2,1,0,1,33,1,0,1,8,1,0,1,64,1,128,1,0,1,32,2,0,1,1,2,0,1,1,1,66,11,0,1,128,1,16,1,32,1,4,1,0,1,66,1,0,1,16,1,0,1,128,1,0,1,1,1,64,2,0,1,2,2,0,1,2,1,132,12,0,1,33,1,64,1,8,1,0,1,132,1,0,1,32,2,0,1,1,1,2,1,128,2,0,1,4,2,0,1,4,1,8,1,1,11,0,1,66,1,128,1,16,1,0,1,8,1,1,1,64,2,0,1,2,1,4,1,0,1,1,1,0,1,8,2,0,1,8,1,16,1,2,11,0,1,132,1,0,1,33,1,0,1,16,1,2,1,252,1,255,1,63,1,4,1,8,1,255,1,127,1,0,1,16,1,254,1,255,1,31,1,224,1,7,11,0,1,8,1,1,1,66,1,0,1,32,1,4,1,8,1,1,1,64,1,8,1,16,1,2,1,132,1,0,1,32,1,4,15,0,1,16,1,2,1,132,1,0,1,64,1,8,1,16,1,2,1,128,1,16,1,32,1,4,1,8,1,1,1,64,1,8,15,0,1,32,1,4,1,8,1,1,1,128,1,16,1,32,1,4,1,0,1,33,1,64,1,8,1,16,1,2,1,128,1,16,12,0,1,128,3,255,1,15,1,16,1,2,1,0,1,33,1,64,1,8,1,0,1,66,1,128,1,16,1,32,1,4,1,0,2,255,1,15,1,0,1,126,9,0,1,1,1,0,1,128,1,0,1,32,1,4,1,0,1,66,1,128,2,255,1,135,1,0,1,33,1,192,1,255,1,1,1,64,1,0,1,16,1,0,1,132,9,0,1,2,2,0,1,1,1,64,1,8,1,0,1,132,1,0,1,32,2,0,1,1,1,66,1,0,1,16,1,2,1,128,1,0,1,32,1,0,1,8,1,1,8,0,1,4,2,0,1,2,1,128,1,16,1,0,1,8,1,1,1,64,2,0,1,2,1,132,1,0,1,32,1,4,1,0,1,1,1,64,1,0,1,16,1,2,8,0,1,8,2,0,1,4,1,0,1,33,1,0,1,16,1,2,1,128,2,0,1,4,1,8,1,1,1,64,1,8,1,0,1,2,1,128,1,0,1,32,1,4,8,0,1,240,2,255,1,15,1,0,1,126,1,0,1,224,1,7,1,0,2,255,1,15,1,240,1,3,1,128,1,31,1,0,1,252,1,255,1,1,1,192,1,15,1,0,1,0,1,0,1,0,1,0,1,0]);
+
+// ============================================================
+// STRINGS (same format as assembly: byte <32 = color, 255 = newline, 0 = terminator)
+// ============================================================
+const S = {
+  Credits: [17,'B','Y',' ','_','F','A','S','T','E','R',' ','2','0','0','3',0],
+  GameTitle: [23,'S','N','A','K','E','!',0],
+  Ver: [17,'V','E','R','S','A','O',' ','0','.','1',0],
+  PressAKey: [15,'P','R','E','S','S','I','O','N','E',' ','E','S','P','A','C','O',' ','P','A','R','A',' ','C','O','N','T','I','N','U','A','R',0],
+  PressAnyKey: [17,'P','R','E','S','S','I','O','N','E',' ','Q','U','A','L','Q','U','E','R',' ','T','E','C','L','A',' ',':','(',0],
+  InstrTitle: [17,'I','N','S','T','R','U','C','O','E','S',0],
+  Instruct: [17,'M','O','V','E','R',' ','C','O','B','R','I','N','H','A',' ',' ',' ',' ','=',' ',15,30,30,30,'S','E','T','A','S',
+    255,17,'P','A','U','S','A','R',' ','J','O','G','O',' ',' ',' ',' ',' ','=',' ',15,30,30,30,'E','S','P','A','C','O',
+    255,17,'A','P','A','G','A','R',' ','E','S','T','R','E','L','A','S',' ','=',' ',15,30,30,30,'S',
+    255,17,'D','E','B','U','G','M','O','D','E',' ','W','I','N','D','O','W',' ','=',' ',15,30,30,30,'D',
+    255,17,'A','U','M','E','N','T','A','R',' ','N','I','V','E','L',' ',' ',' ','=',' ',15,30,30,30,'A',' ',17,'E','M',' ','D','E','B','U','G','M','O','D','E',
+    255,17,'S','A','I','R',' ','D','O',' ','J','O','G','O',' ',' ',' ',' ','=',' ',23,30,30,30,'E','S','C',0],
+  GOverTitle: [17,'G','A','M','E',' ','O','V','E','R',' ',':','(',0],
+  GameOver: [15,'N','A','O',' ','F','I','Q','U','E',' ','T','R','I','S','T','E',' ','P','R','E','S','S','I','O','N','E',' ','E','N','T','E','R',' ','P','A','R','A',' ','J','O','G','A','R',
+    255,' ',' ',' ',' ',' ',' ',' ','O','U','T','R','A',' ','P','A','R','T','I','D','A',',',' ','M','A','S',' ','S','E',' ','V','C',
+    255,' ',' ',' ',' ',' ',' ',' ','Q','U','I','S','E','R',' ','S','A','I','R',',',' ','A','P','E','R','T','E',' ','E','S','C',' ',17,'(','N','A','O',' ','V','A','H','H',')',15,' ',':',')',0],
+  DebugTitle: [17,'D','E','B','U','G',0],
+  DotXStr: [23,'D','O','T','_','X',':',0],
+  DotYStr: [23,'D','O','T','_','Y',':',0],
+  SnakeXStr: [23,'S','N','A','K','E','_','X',':',0],
+  SnakeYStr: [23,'S','N','A','K','E','_','Y',':',0],
+  SnakeStr: [23,'S','I','Z','E',':',0],
+  SSStr: [23,'S','H','O','W','S','T','A','R','S',':',0],
+  UpStr: [17,'C','I','M','A',0],
+  DownStr: [15,'B','A','I','X','O',0],
+  LeftStr: [21,'E','S','Q','.',0],
+  RightStr: [25,'D','I','R','.',0],
+  SnakeDirStr: [23,'D','I','R','E','C','A','O',':',0],
+  ScoreText: [15,'S','C','O','R','E',':',0],
+  LevelText: [15,'N','I','V','E','L',':',0],
+  NumberStr: [17,'9','9','9','9','9','9','9','9',0],
+  FinalCredits: [17,' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','S','N','A','K','E','!',
+    255,255,23,' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','P','R','O','G','R','A','M','A','D','O',' ','P','O','R',
+    255,15,' ',' ',' ',' ',' ',' ','_','F','A','S','T','E','R',' ','(','B','R','U','N','O',' ','C','O','S','T','A',')',
+    255,25,' ',' ',' ',' ',' ',' ','X','_','B','R','U','N','O','1','7',17,'@',15,'Y','A','H','O','O',17,'.',15,'C','O','M',17,'.',15,'B','R',
+    255,255,17,' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','E','M',
+    255,15,' ',' ',' ',' ',' ',' ',' ',' ','V','A','R','I','O','S',' ','D','I','A','S',' ','D','E',' ',17,'A','G','O','S','T','O',15,' ','D','E',' ',17,'2','0','0','3',
+    255,255,255,17,' ',' ',' ',' ',' ',' ',' ',' ',' ','V','I','S','I','T','E','M',' ','O','S',' ','C','A','N','A','I','S',':',
+    255,21,' ',' ',' ','#','D','E','F','I','N','E',',',' ','#','R','O','M','H','A','C','K','I','N','G',',',' ','#','U','N','A','S','H','A','M','E','D',
+    255,255,255,17,' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','B','L','I','N','D',' ','G','U','A','R','D','I','A','N',' ','R','O','X',
+    255,255,255,255,17,' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','\\','O','/',0]
+};
+
+// ============================================================
+// CANVAS SETUP
+// ============================================================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const imageData = ctx.createImageData(320, 200);
+const data = imageData.data;
+
+// Pixel buffer (palette indices)
+const buf = new Uint8Array(320 * 200);
+
+// ============================================================
+// GAME STATE
+// ============================================================
+const state = {
+  dir: 0, vel: 10, velCount: 0, scount: 3, score: 0, level: 0,
+  dotX: 0, dotY: 0, showDebug: 0, showStars: 1, introMode: 0,
+  seed: 1, angle: 360, degPi: 180, radius: 4,
+  snakeX: new Uint8Array(50), snakeY: new Uint8Array(50),
+  foreStarsX: new Uint16Array(25), foreStarsY: new Uint16Array(25),
+  backStarsX: new Uint16Array(25), backStarsY: new Uint16Array(25),
+  gameState: 'intro', // 'intro' | 'game' | 'gameover' | 'credits' | 'pause'
+  tempX: 0, tempY: 0, tempByte: 0
+};
+
+// ============================================================
+// RANDOM (same LCG as assembly: seed = seed * 0xABCD + 1)
+// ============================================================
+function random(range) {
+  state.seed = (state.seed * 0xABCD + 1) & 0xFFFF;
+  return (state.seed % range) >>> 0;
+}
+
+// ============================================================
+// BUFFER FUNCTIONS
+// ============================================================
+function putPixel(x, y, color) {
+  if (x < 0 || x >= 320 || y < 0 || y >= 200) return;
+  buf[y * 320 + x] = color;
+}
+
+function clearScreen() {
+  buf.fill(0);
+}
+
+function flipBuffer() {
+  for (let i = 0; i < 320 * 200; i++) {
+    const c = palette[buf[i]];
+    if (c) {
+      data[i * 4] = c[0];
+      data[i * 4 + 1] = c[1];
+      data[i * 4 + 2] = c[2];
+      data[i * 4 + 3] = 255;
+    } else {
+      data[i * 4] = 0;
+      data[i * 4 + 1] = 0;
+      data[i * 4 + 2] = 0;
+      data[i * 4 + 3] = 255;
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+}
+
+// ============================================================
+// FONT RENDERING
+// ============================================================
+function drawChar(ch, x, y, col, italic, shadow) {
+  if (y > 194) return;
+  const idx = (ch - 32) * 5;
+  if (idx < 0 || idx >= smallFont.length) return;
+
+  for (let row = 0; row < 5; row++) {
+    const byte = smallFont[idx + row];
+    for (let col2 = 0; col2 < 5; col2++) {
+      if (byte & (1 << (7 - col2))) {
+        let px = x + col2;
+        let py = y + row;
+        if (italic) { px -= (row >> 1); }
+        putPixel(px, py, col);
+      }
+    }
+  }
+}
+
+function toCode(v) {
+  return typeof v === 'number' ? v : v.charCodeAt(0);
+}
+
+function drawText(str, x, y, shadow, italic) {
+  let cx = x, cy = y, initX = x;
+  let curCol = 17;
+  const useShadow = shadow !== undefined ? shadow : 255;
+
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    const code = toCode(ch);
+    if (code === 0) break;
+    if (typeof ch === 'number') {
+      if (ch < 32) { curCol = ch; continue; }
+      if (ch === 255) { cy += 6; cx = initX; continue; }
+    }
+    if (useShadow !== 255) {
+      drawChar(code, cx + 1, cy + 1, useShadow, false, 255);
+    }
+    drawChar(code, cx, cy, curCol, italic, 255);
+    cx += 6;
+  }
+}
+
+// ============================================================
+// SPRITE / GRAPHICS RENDERING
+// ============================================================
+function spriteDraw(sprite, x, y, headFlag) {
+  for (let row = 0; row < 8; row++) {
+    for (let col2 = 0; col2 < 8; col2++) {
+      const c = sprite[row * 8 + col2];
+      if (c === 0) continue;
+      const px = x + col2;
+      const py = y + row;
+      if (px < 0 || px >= 320 || py < 0 || py >= 200) continue;
+      buf[py * 320 + px] = headFlag ? c + 4 : c;
+    }
+  }
+}
+
+function drawHL(x, y, w, color) {
+  if (y < 0 || y >= 200) return;
+  for (let i = 0; i < w; i++) {
+    const px = x + i;
+    if (px >= 0 && px < 320) buf[y * 320 + px] = color;
+  }
+}
+
+function drawVL(x, y, h, color) {
+  if (x < 0 || x >= 320) return;
+  for (let i = 0; i < h; i++) {
+    const py = y + i;
+    if (py >= 0 && py < 200) buf[py * 320 + x] = color;
+  }
+}
+
+function drawBox(x, y, w, h, color) {
+  if (x + w > 320 || y + h > 200) return;
+  for (let row = 0; row < h; row++) {
+    for (let col2 = 0; col2 < w; col2++) {
+      buf[(y + row) * 320 + (x + col2)] = color;
+    }
+  }
+}
+
+function drawWindow(x, y, w, h, color) {
+  // Title bar: 7px high box only
+  drawBox(x, y, w, Math.min(7, h), color);
+  // Top border line
+  drawHL(x, y, w, color);
+  // Left border line
+  drawVL(x, y, h, color);
+  // Right border: at x+w-1
+  drawVL(x + w - 1, y, h, color);
+  // Bottom border: at y+h-1
+  drawHL(x, y + h - 1, w, color);
+}
+
+// ============================================================
+// RLE LOGO
+// ============================================================
+function drawRLELogo(offsetX, offsetY) {
+  let pixelIdx = 0;
+  let si = 0;
+
+  while (si < logoData.length) {
+    const count = logoData[si++];
+    if (si >= logoData.length) break;
+    const bits = logoData[si++];
+
+    // Draw 'count' repetitions of this byte
+    for (let rep = 0; rep < count; rep++) {
+      // Draw 8 pixels from this byte (LSB first: bit 0 to bit 7)
+      for (let bit = 0; bit < 8; bit++) {
+        const tempX = pixelIdx % 249;
+        const tempY = Math.floor(pixelIdx / 249);
+
+        if (bits & (1 << bit)) {
+          putPixel(offsetX + tempX, offsetY + tempY, 23);
+        }
+        pixelIdx++;
+      }
+    }
+  }
+}
+
+// ============================================================
+// STARS
+// ============================================================
+function initStars() {
+  for (let i = 0; i < 25; i++) {
+    state.foreStarsX[i] = (random(309) + 10) >>> 0;
+    state.foreStarsY[i] = (random(181) + 10) >>> 0;
+    state.backStarsX[i] = (random(307) + 13) >>> 0;
+    state.backStarsY[i] = (random(181) + 10) >>> 0;
+  }
+}
+
+function drawStars() {
+  for (let i = 0; i < 25; i++) {
+    // Back stars: move 1px left
+    if (state.backStarsX[i] > 0) {
+      state.backStarsX[i]--;
+    } else {
+      state.backStarsY[i] = (random(180) + 10) >>> 0;
+      state.backStarsX[i] = 318;
+    }
+    // Fore stars: move 2px left
+    if (state.foreStarsX[i] < 2) {
+      state.foreStarsY[i] = (random(180) + 10) >>> 0;
+      state.foreStarsX[i] = 318;
+    } else {
+      state.foreStarsX[i] -= 2;
+    }
+  }
+
+  for (let i = 0; i < 25; i++) {
+    // Back stars
+    const bx = state.backStarsX[i], by = state.backStarsY[i];
+    putPixel(bx, by, 4);
+    if (bx < 319) putPixel(bx + 1, by, 6);
+
+    // Fore stars
+    const fx = state.foreStarsX[i], fy = state.foreStarsY[i];
+    putPixel(fx, fy, 17);
+    if (fx < 319) { putPixel(fx + 1, fy, 5); }
+    if (fx < 318) { putPixel(fx + 2, fy, 6); }
+  }
+}
+
+// ============================================================
+// SNAKE LOGIC
+// ============================================================
+function initSnake() {
+  state.snakeX.fill(0);
+  state.snakeY.fill(0);
+  state.vel = 10;
+  state.snakeX[0] = 19; state.snakeY[0] = 12;
+  state.snakeX[1] = 18; state.snakeY[1] = 12;
+  state.snakeX[2] = 17; state.snakeY[2] = 12;
+  state.scount = 3;
+  state.dir = 1;
+  state.dotX = 0; state.dotY = 0;
+  state.score = 0; state.level = 0;
+}
+
+function snakeInXY(x, y) {
+  for (let i = state.scount - 1; i > 0; i--) {
+    if (state.snakeX[i] === x && state.snakeY[i] === y) return true;
+  }
+  return false;
+}
+
+function putDot() {
+  let attempts = 0;
+  do {
+    state.dotX = random(40) >>> 0;
+    state.dotY = (random(22) + 1) >>> 0;
+    attempts++;
+  } while ((snakeInXY(state.dotX, state.dotY) ||
+           (state.dotX === state.snakeX[0] && state.dotY === state.snakeY[0])) &&
+           attempts < 200);
+}
+
+function updateSnake() {
+  // Calculate speed
+  let v = state.level + 1;
+  v = (v << 2) + (v << 3); // v = (level+1)*12
+  state.vel = v;
+
+  // Check self-collision
+  if (state.introMode === 0) {
+    if (snakeInXY(state.snakeX[0], state.snakeY[0])) {
+      state.gameState = 'gameover';
+      return;
+    }
+  }
+
+  // Check food collision
+  if (state.snakeX[0] === state.dotX && state.snakeY[0] === state.dotY) {
+    state.scount++;
+    if (state.introMode === 0) state.score += 250;
+    putDot();
+    if (state.scount > 49) {
+      if (state.introMode === 0) state.level++;
+      state.scount = 3;
+    }
+  }
+
+  // Move snake body
+  for (let i = state.scount; i > 0; i--) {
+    state.snakeX[i] = state.snakeX[i - 1];
+    state.snakeY[i] = state.snakeY[i - 1];
+  }
+
+  // Move head
+  switch (state.dir) {
+    case 0: // left
+      state.snakeX[0] = state.snakeX[0] === 0 ? 39 : state.snakeX[0] - 1;
+      break;
+    case 1: // right
+      state.snakeX[0] = state.snakeX[0] === 39 ? 0 : state.snakeX[0] + 1;
+      break;
+    case 2: // up
+      state.snakeY[0] = state.snakeY[0] === 0 ? 23 : state.snakeY[0] - 1;
+      break;
+    case 3: // down
+      state.snakeY[0] = state.snakeY[0] === 23 ? 0 : state.snakeY[0] + 1;
+      break;
+  }
+}
+
+// ============================================================
+// AUTOPILOT
+// ============================================================
+function autoPilot() {
+  // Chase dot X
+  if (state.snakeX[0] !== state.dotX) {
+    if (state.snakeX[0] > state.dotX) {
+      if (state.dir !== 0) state.dir = 0;
+    } else {
+      if (state.dir !== 1) state.dir = 1;
+    }
+  }
+
+  // Chase dot Y
+  if (state.snakeY[0] !== state.dotY) {
+    if (state.snakeY[0] > state.dotY) {
+      if (state.dir !== 3) state.dir = 2;
+    } else {
+      if (state.dir !== 2) state.dir = 3;
+    }
+  }
+
+  // Avoid collision
+  let nx = state.snakeX[0], ny = state.snakeY[0];
+  switch (state.dir) {
+    case 0: nx--; break;
+    case 1: nx++; break;
+    case 2: ny--; break;
+    case 3: ny++; break;
+  }
+  if (nx < 0) nx = 39; if (nx > 39) nx = 0;
+  if (ny < 0) ny = 23; if (ny > 23) ny = 0;
+
+  if (snakeInXY(nx, ny)) {
+    if (state.dir === 0) { state.dir = 2; }
+    else if (state.dir === 1) { state.dir = 3; }
+    else if (state.dir === 2) { state.dir = 1; }
+    else if (state.dir === 3) { state.dir = 0; }
+  }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function numToStr(n) {
+  const s = n.toString();
+  const r = [];
+  for (let i = 0; i < s.length; i++) r.push(s.charCodeAt(i));
+  r.push(0);
+  return r;
+}
+
+// ============================================================
+// DRAWING FUNCTIONS
+// ============================================================
+function drawScreen() {
+  // Draw dot
+  let rx = state.dotX * 8, ry = state.dotY * 8;
+  spriteDraw(dotSprite, rx, ry, 0);
+
+  // Orbiting dot (FPU effect)
+  const angleRad = state.angle * Math.PI / state.degPi;
+  const tx = Math.round(state.radius * Math.cos(angleRad));
+  const ty = Math.round(state.radius * Math.sin(angleRad));
+  spriteDraw(dotSprite, rx + ty, ry + tx, 0);
+
+  state.angle -= 6;
+  if (state.angle <= 0) state.angle = 360;
+
+  // Draw snake
+  for (let i = state.scount - 1; i >= 0; i--) {
+    const sx = state.snakeX[i] * 8, sy = state.snakeY[i] * 8;
+    spriteDraw(snakeBody, sx, sy, i === 0 ? 1 : 0);
+  }
+}
+
+function drawStatus() {
+  drawBox(1, 191, 318, 8, 8);
+
+  drawText(S.ScoreText, 5, 194);
+  drawText(numToStr(state.score), 45, 194);
+
+  drawText(S.LevelText, 125, 194);
+  drawText(numToStr(state.level), 165, 194);
+}
+
+function drawCredits() {
+  drawText(S.GameTitle, 1, 1, 22, true);
+  drawText(S.Ver, 250, 1, 1);
+}
+
+function drawDebugger() {
+  drawWindow(230, 10, 87, 65, 15);
+  drawText(S.DebugTitle, 252, 12, 0);
+
+  // Draw labels at x=234 (inside window, 4px padding)
+  // Values drawn at current Font.X after label
+  const baseX = 234;
+
+  drawText(S.DotXStr, baseX, 20);
+  drawText(numToStr(state.dotX), baseX + 36, 20); // After "DOT_X:" (6 chars * 6px)
+
+  drawText(S.DotYStr, baseX, 28);
+  drawText(numToStr(state.dotY), baseX + 36, 28); // After "DOT_Y:" (6 chars * 6px)
+
+  drawText(S.SnakeXStr, baseX, 36);
+  drawText(numToStr(state.snakeX[0]), baseX + 48, 36); // After "SNAKE_X:" (8 chars * 6px)
+
+  drawText(S.SnakeYStr, baseX, 44);
+  drawText(numToStr(state.snakeY[0]), baseX + 48, 44); // After "SNAKE_Y:" (8 chars * 6px)
+
+  drawText(S.SnakeStr, baseX, 52);
+  drawText(numToStr(state.scount), baseX + 30, 52); // After "SIZE:" (5 chars * 6px)
+
+  drawText(S.SSStr, baseX, 60);
+  drawText(numToStr(state.showStars), baseX + 60, 60); // After "SHOWSTARS:" (10 chars * 6px)
+
+  drawText(S.SnakeDirStr, baseX, 68);
+  // Draw direction at current position after "DIRECAO:" (8 chars * 6px)
+  const dirX = baseX + 48;
+  if (state.dir === 0) drawText(S.LeftStr, dirX, 68);
+  else if (state.dir === 1) drawText(S.RightStr, dirX, 68);
+  else if (state.dir === 2) drawText(S.UpStr, dirX, 68);
+  else if (state.dir === 3) drawText(S.DownStr, dirX, 68);
+}
+
+function drawGame() {
+  // Update speed
+  state.velCount += state.vel;
+  if (state.velCount >= 100) {
+    state.velCount = 0;
+    state.score++;
+    updateSnake();
+  }
+
+  clearScreen();
+  if (state.showStars) drawStars();
+  drawScreen();
+  drawStatus();
+  if (state.showDebug) drawDebugger();
+  drawCredits();
+  flipBuffer();
+}
+
+function drawIntro() {
+  state.introMode = 1;
+  autoPilot();
+  updateSnake();
+  clearScreen();
+  if (state.showStars) drawStars();
+  drawScreen();
+  drawRLELogo(35, 15);
+  drawText(S.PressAKey, 65, 82);
+  drawText(S.Credits, 220, 194);
+  flipBuffer();
+}
+
+
+function drawInstructions() {
+  clearScreen();
+  drawWindow(50, 30, 220, 84, 23);
+  drawText(S.InstrTitle, 120, 31, 0);
+  drawText(S.Instruct, 60, 45);
+  drawText(S.PressAKey, 65, 103);
+  flipBuffer();
+}
+
+// ============================================================
+// GAME INITIALIZATION
+// ============================================================
+function initGame() {
+  initSnake();
+  state.introMode = 0;
+  state.radius = 4;
+  state.degPi = 180;
+  state.angle = 360;
+  state.showDebug = 0;
+  state.showStars = 1;
+  putDot();
+  state.gameState = 'intro';
+}
+
+// ============================================================
+// INPUT
+// ============================================================
+const keys = {};
+const justPressed = new Set();
+
+document.addEventListener('keydown', (e) => {
+  if (!keys[e.keyCode]) {
+    justPressed.add(e.keyCode);
+  }
+  keys[e.keyCode] = true;
+  if ([32, 37, 38, 39, 40, 68, 83, 13, 27].includes(e.keyCode)) {
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  keys[e.keyCode] = false;
+});
+
+// ============================================================
+// GAME LOOP
+// ============================================================
+function consumeKey(k) {
+  justPressed.delete(k);
+}
+
+function gameLoop() {
+  // Read all pending keys
+  const keysToHandle = [...justPressed];
+
+  if (state.gameState === 'intro') {
+    drawIntro();
+    for (const k of keysToHandle) {
+      if (k === 32) { // Space
+        consumeKey(k);
+        state.introMode = 0;
+        initGame();
+        state.gameState = 'game';
+        break;
+      } else if (k === 27) { // Esc
+        consumeKey(k);
+        state.gameState = 'credits';
+        break;
+      }
+    }
+  } else if (state.gameState === 'game') {
+    for (const k of keysToHandle) {
+      if (k === 38 && state.dir !== 3) { state.dir = 2; consumeKey(k); break; } // Up
+      else if (k === 40 && state.dir !== 2) { state.dir = 3; consumeKey(k); break; } // Down
+      else if (k === 37 && state.dir !== 1) { state.dir = 0; consumeKey(k); break; } // Left
+      else if (k === 39 && state.dir !== 0) { state.dir = 1; consumeKey(k); break; } // Right
+    }
+    for (const k of keysToHandle) {
+      // Debug: Enter increases level
+      if (k === 13 && state.showDebug) {
+        state.level = (state.level + 1) % 10; consumeKey(k);
+      }
+      // D: toggle debug
+      if (k === 68) { state.showDebug = state.showDebug ? 0 : 1; consumeKey(k); }
+      // S: toggle stars
+      if (k === 83) { state.showStars = state.showStars ? 0 : 1; consumeKey(k); }
+      // Space: pause
+      if (k === 32) { state.gameState = 'pause'; consumeKey(k); }
+      // Esc: quit
+      if (k === 27) { state.gameState = 'credits'; consumeKey(k); }
+    }
+    drawGame();
+  } else if (state.gameState === 'pause') {
+    drawInstructions();
+    for (const k of keysToHandle) {
+      if (k === 32 || k === 27) { state.gameState = 'game'; consumeKey(k); }
+    }
+  } else if (state.gameState === 'gameover') {
+    drawWindow(30, 65, 260, 60, 1);
+    drawText(S.GOverTitle, 120, 66, 0);
+    flipBuffer();
+    drawText(S.GameOver, 26, 90);
+    flipBuffer();
+    for (const k of keysToHandle) {
+      if (k === 13) { consumeKey(k); initGame(); state.gameState = 'game'; }
+      if (k === 27) { consumeKey(k); state.gameState = 'credits'; }
+    }
+  } else if (state.gameState === 'credits') {
+    clearScreen();
+    drawText(S.FinalCredits, 40, 10);
+    drawText(S.PressAnyKey, 80, 187);
+    flipBuffer();
+    for (const k of keysToHandle) {
+      consumeKey(k);
+      state.gameState = 'intro';
+      initGame();
+      break;
+    }
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+// START
+// ============================================================
+initStars();
+initGame();
+state.gameState = 'intro';
+gameLoop();
+</script>
+</body>
+</html>

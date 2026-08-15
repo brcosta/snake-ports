@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Snake NES / Nestopia smoke test</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 24px; background: #101217; color: #e8edf3; font: 14px system-ui, sans-serif; }
+    main { width: min(760px, 100%); margin: auto; }
+    #game { width: 640px; height: 600px; max-width: 100%; margin: 16px 0; background: #000; }
+    #result { padding: 12px; border: 1px solid #3c4652; background: #171b22; white-space: pre-wrap; }
+    .pass { color: #8dff63; } .fail { color: #ff8d8d; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Nestopia ROM test</h1>
+    <p>This page runs the actual ROM with EmulatorJS/Nestopia and checks the core/input path.</p>
+    <div id="game" aria-label="Nestopia test emulator"></div>
+    <pre id="result">Loading EmulatorJS/Nestopia…</pre>
+  </main>
+
+  <script>
+    EJS_player = '#game';
+    EJS_core = 'nestopia';
+    EJS_gameUrl = `snake.nes?nestopia-test=${Date.now()}`;
+    EJS_gameName = 'Snake NES Nestopia test';
+    EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+    EJS_controlScheme = 'nes';
+    EJS_startOnLoaded = true;
+    EJS_volume = 0;
+
+    const output = document.getElementById('result');
+    const report = { core: 'nestopia', pass: false, checks: [] };
+    let hasRun = false;
+
+    function write(message, failed = false) {
+      output.className = failed ? 'fail' : '';
+      output.textContent = message;
+    }
+
+    function check(name, condition, detail) {
+      report.checks.push({ name, pass: condition, detail });
+      if (!condition) throw new Error(`${name}: ${detail}`);
+    }
+
+    function wait(milliseconds) {
+      return new Promise(resolve => setTimeout(resolve, milliseconds));
+    }
+
+    function getCanvas() {
+      const canvas = document.querySelector('#game canvas');
+      if (!canvas) throw new Error('EmulatorJS canvas was not created');
+      return canvas;
+    }
+
+    async function waitForCanvas() {
+      const deadline = Date.now() + 10000;
+      while (Date.now() < deadline) {
+        const canvas = document.querySelector('#game canvas');
+        if (canvas && canvas.width > 0 && canvas.height > 0) return canvas;
+        await wait(100);
+      }
+      throw new Error('EmulatorJS canvas was not created');
+    }
+
+    function input(index, value) {
+      const manager = window.EJS_emulator?.gameManager;
+      if (!manager || typeof manager.simulateInput !== 'function') {
+        throw new Error('EmulatorJS GameManager input API is unavailable');
+      }
+      manager.simulateInput(0, index, value);
+    }
+
+    async function tap(index) {
+      input(index, 1);
+      await wait(80);
+      input(index, 0);
+      await wait(180);
+    }
+
+    async function runNestopiaTest() {
+      if (hasRun) return report;
+      hasRun = true;
+      try {
+        const canvas = await waitForCanvas();
+        check('Nestopia created a render canvas', canvas.width >= 256 && canvas.height >= 240,
+          `${canvas.width}x${canvas.height}`);
+        check('Nestopia exposes EmulatorJS input', typeof window.EJS_emulator?.gameManager?.simulateInput === 'function',
+          'GameManager.simulateInput()');
+
+        await tap(3); // NES Start in EmulatorJS's documented NES control map.
+        await wait(500);
+        report.visual = 'The active Nestopia canvas is visible above; use it for frame-level visual checks.';
+
+        report.pass = true;
+        output.className = 'pass';
+        write(JSON.stringify(report, null, 2));
+      } catch (error) {
+        report.error = error.message;
+        output.className = 'fail';
+        write(JSON.stringify(report, null, 2), true);
+      }
+      return report;
+    }
+
+    window.__nestopiaTest = { run: runNestopiaTest, report, input, tap };
+    EJS_ready = runNestopiaTest;
+  </script>
+  <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
+</body>
+</html>
