@@ -22,6 +22,8 @@
     .preview img { display:block; width:100%; height:150px; object-fit:contain; image-rendering:pixelated; }
     .preview.emulator-preview { min-height:150px; align-items:stretch; }
     .preview.emulator-preview iframe { display:block; width:100%; height:220px; border:0; background:#000; }
+    .preview.web-preview { min-height:150px; align-items:stretch; }
+    .preview.web-preview iframe { display:block; width:100%; height:220px; border:0; background:#000; }
     .buttons { display:flex; flex-wrap:wrap; gap:10px; margin-top:auto; }
     a.button { display:inline-block; padding:10px 14px; border-radius:8px; color:#111; background:var(--orange); font-weight:800; text-decoration:none; }
     a.button:hover { filter:brightness(1.12); }
@@ -41,9 +43,9 @@
 
     <section class="ports" aria-label="Playable ports">
       <article class="card">
-        <div class="preview"><img src="docs/screenshots/original-web-title.jpg" alt="Original web port title screen"></div>
+        <div class="preview web-preview"><iframe src="ports/web/index.html" title="Original web Snake player" loading="lazy"></iframe></div>
         <h2>Original web port</h2>
-        <p>The self-contained HTML/Canvas version. No build step or emulator is required.</p>
+        <p>Play the self-contained HTML/Canvas version directly in this mini player.</p>
         <div class="buttons"><a class="button" href="ports/web/index.html">Play web game</a><a class="button secondary" href="ports/web/README.md">About this port</a></div>
       </article>
 
