@@ -6,7 +6,7 @@ accurate desktop emulators and browser-based EmulatorJS/Nestopia.
 
 ## 1. Preserve the gameplay contract first
 
-The HTML version was treated as the behavioral reference. Before optimizing
+The HTML version in `ports/web/index.html` was treated as the behavioral reference. Before optimizing
 for visual fidelity, the port reproduced the important rules:
 
 - The snake moves on a wrapped 32-column by 28-row playfield.
@@ -26,8 +26,8 @@ score, speed, and demo mode.
 
 The ROM uses the smallest practical NES configuration:
 
-- cc65 `ca65` assembles the 6502 source.
-- `ld65` links it with `nes.cfg`.
+- cc65 `ca65` assembles `ports/nes/src/snake.asm`.
+- `ld65` links it with `ports/nes/src/nes.cfg`.
 - Mapper 0 / NROM is used for broad emulator compatibility.
 - The ROM uses one 16 KiB PRG bank mirrored by NROM-128 and initializes the
   8 KiB CHR-RAM pattern table from compact data stored in PRG-ROM.
@@ -112,7 +112,7 @@ logo uses dedicated line-art tiles assembled from multiple 8x8 sprites.
 The NES has 64 hardware sprites and a practical eight-sprites-per-scanline
 limit. The port accounts for both:
 
-- Gameplay OAM contains only food, its orbit, and three stars; all 50 possible
+- Gameplay OAM contains only food, its orbit, and a small set of stars; all 50 possible
   body segments are background tiles.
 - The title logo and attract-mode demo snake use background tiles. Title OAM is
   reserved for the food, its orbit, and 12 stars, keeping decorative sprites
@@ -144,7 +144,7 @@ and then checked against accurate desktop emulators:
 
 ## 8. Test the actual browser core
 
-`test_nestopia.html` loads the ROM through the same EmulatorJS configuration as
+`ports/nes/web/test_nestopia.html` loads the ROM through the same EmulatorJS configuration as
 the player, explicitly selects the Nestopia core, and drives the documented NES
 input indices through EmulatorJS's `GameManager.simulateInput()` API. It checks
 that the actual Nestopia instance creates a render canvas and exposes its NES
@@ -158,7 +158,7 @@ real Nestopia/Mesen hardware-accuracy run.
 
 ## 9. Keep the browser player as a real test surface
 
-`jsnes-player.html` is served over HTTP because browsers do not reliably load a
+`ports/nes/web/jsnes-player.html` is served over HTTP because browsers do not reliably load a
 ROM with `file://` fetches. It embeds the official EmulatorJS loader, points it
 at the local ROM with a cache-busting query, and selects the Nestopia NES core.
 EmulatorJS owns the rendering, keyboard mapping, pause/reset menu, save states,
@@ -172,14 +172,14 @@ emulators are the validation surfaces for the ROM.
 ## Build and run
 
 ```bash
-./build.sh
+./ports/nes/build.sh
 python3 -m http.server 8000
 ```
 
 Then open:
 
 ```text
-http://localhost:8000/jsnes-player.html
+http://localhost:8000/ports/nes/web/jsnes-player.html
 
-http://localhost:8000/test_nestopia.html
+http://localhost:8000/ports/nes/web/test_nestopia.html
 ```
